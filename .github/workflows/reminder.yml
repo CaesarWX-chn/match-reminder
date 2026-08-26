@@ -1,0 +1,41 @@
+name: 观赛提醒（云端）
+
+on:
+  schedule:
+    # 每 15 分钟运行一次（UTC 时间，北京=UTC+8）
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}   # 支持手动触发测试
+
+# 需要写权限来提交"已提醒记录"，防止重复推送
+permissions:
+  contents: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 检查并发送提醒
+        run: node src/reminder.mjs
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}        # 必填：你的 Bark key
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}    # 可选：ntfy 话题名
+          NOTIFY_ALL_SESSIONS: ${{ vars.NOTIFY_ALL_SESSIONS || '' }}
+
+      - name: 提交已提醒状态（防重复推送）
+        run: |
+          if [ -f state/reminded.json ] && git diff --quiet state/reminded.json; then
+            echo "状态无变化，跳过提交"
+          else
+            git config user.name "reminder-bot"
+            git config user.email "reminder-bot@users.noreply.github.com"
+            git add state/reminded.json
+            git commit -m "update reminder state" || true
+            git push
+            echo "已提交新状态"
+          fi
