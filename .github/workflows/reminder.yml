@@ -14,9 +14,9 @@ jobs:
   remind:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -25,7 +25,7 @@ jobs:
         env:
           BARK_KEY: ${{ secrets.BARK_KEY }}        # 必填：你的 Bark key
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}    # 可选：ntfy 话题名
-          NOTIFY_ALL_SESSIONS: ${{ vars.NOTIFY_ALL_SESSIONS || '' }}
+          NOTIFY_ALL_SESSIONS: ${{ vars.NOTIFY_ALL_SESSIONS || '1' }}
 
       - name: 提交已提醒状态（防重复推送）
         run: |
