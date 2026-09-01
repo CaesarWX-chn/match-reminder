@@ -23,18 +23,19 @@ jobs:
       - name: 检查并发送提醒
         run: node src/reminder.mjs
         env:
+          # 在仓库 Settings → Secrets and variables → Actions 里配置：
           BARK_KEY: ${{ secrets.BARK_KEY }}        # 必填：你的 Bark key
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}    # 可选：ntfy 话题名
-          NOTIFY_ALL_SESSIONS: ${{ vars.NOTIFY_ALL_SESSIONS || '1' }}
+          NOTIFY_ALL_SESSIONS: ${{ vars.NOTIFY_ALL_SESSIONS || '1' }}  # 1 = 练习赛/热身也提醒（默认开启）
 
       - name: 提交已提醒状态（防重复推送）
         run: |
-          if [ -f state/reminded.json ] && git diff --quiet state/reminded.json; then
+          git add state/reminded.json 2>/dev/null || true
+          if git diff --cached --quiet; then
             echo "状态无变化，跳过提交"
           else
             git config user.name "reminder-bot"
             git config user.email "reminder-bot@users.noreply.github.com"
-            git add state/reminded.json
             git commit -m "update reminder state" || true
             git push
             echo "已提交新状态"
