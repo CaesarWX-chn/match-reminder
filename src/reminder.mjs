@@ -131,9 +131,35 @@ function parseEspnEvent(e, compCN) {
   return {
     id: 'city-' + e.id, sport: 'city', competition: compCN,
     round: (comp.notes && comp.notes[0] && comp.notes[0].headline) ? String(comp.notes[0].headline).trim() : '',
+    home: teamCN(hName), away: teamCN(aName),
     title: `${teamCN(hName)} vs ${teamCN(aName)}`,
     startUtc: start.toISOString(), status, timeKnown: true, sessionType: 'comp',
   };
+}
+
+// ---------------------------------------------------------------------------
+// 曼城 26/27 英超 38 轮对照表（用于回填"第X轮"；ESPN 不返回轮次）
+// 数据来源：国内媒体（说球帝）转英超官方初始赛程
+// ---------------------------------------------------------------------------
+const CITY_ROUNDS = [
+  ['第1轮', '曼城', '伯恩茅斯'], ['第2轮', '水晶宫', '曼城'], ['第3轮', '曼城', '考文垂'],
+  ['第4轮', '曼联', '曼城'], ['第5轮', '曼城', '桑德兰'], ['第6轮', '利物浦', '曼城'],
+  ['第7轮', '曼城', '伊普斯维奇'], ['第8轮', '阿斯顿维拉', '曼城'], ['第9轮', '曼城', '布莱顿'],
+  ['第10轮', '诺丁汉森林', '曼城'], ['第11轮', '曼城', '富勒姆'], ['第12轮', '阿森纳', '曼城'],
+  ['第13轮', '曼城', '利兹联'], ['第14轮', '布伦特福德', '曼城'], ['第15轮', '曼城', '切尔西'],
+  ['第16轮', '曼城', '赫尔城'], ['第17轮', '纽卡斯尔', '曼城'], ['第18轮', '埃弗顿', '曼城'],
+  ['第19轮', '曼城', '热刺'], ['第20轮', '利兹联', '曼城'], ['第21轮', '曼城', '诺丁汉森林'],
+  ['第22轮', '布莱顿', '曼城'], ['第23轮', '曼城', '阿森纳'], ['第24轮', '富勒姆', '曼城'],
+  ['第25轮', '热刺', '曼城'], ['第26轮', '曼城', '纽卡斯尔'], ['第27轮', '赫尔城', '曼城'],
+  ['第28轮', '曼城', '埃弗顿'], ['第29轮', '考文垂', '曼城'], ['第30轮', '曼城', '曼联'],
+  ['第31轮', '伯恩茅斯', '曼城'], ['第32轮', '曼城', '水晶宫'], ['第33轮', '切尔西', '曼城'],
+  ['第34轮', '曼城', '布伦特福德'], ['第35轮', '曼城', '利物浦'], ['第36轮', '伊普斯维奇', '曼城'],
+  ['第37轮', '曼城', '阿斯顿维拉'], ['第38轮', '桑德兰', '曼城'],
+];
+function backfillCityRound(ev) {
+  if (ev.sport !== 'city' || ev.round || ev.competition !== '英超') return;
+  const hit = CITY_ROUNDS.find((r) => r[1] === ev.home && r[2] === ev.away);
+  if (hit) ev.round = hit[0];
 }
 async function fetchManCity() {
   const ranges = monthRanges(3);
@@ -190,27 +216,27 @@ const MGP_ROUND_TIMES = {
 const MGP_SESSION_PROFILES = {
   aragon: {
     o: 2,
-    fri: [['fp1', 'FP1 练习赛', '10:45'], ['pr', '练习（PR）', '15:00']],
-    sat: [['fp2', 'FP2 练习赛', '10:10'], ['q', '排位赛（Q1/Q2）', '10:50'], ['sprint', '冲刺赛', '15:00']],
-    sun: [['wup', '热身（Warm-up）', '09:40']],
+    fri: [['fp1', '一练（FP1）', '10:45'], ['pr', '练习（PR）', '15:00']],
+    sat: [['fp2', '二练（FP2）', '10:10'], ['q', '排位赛', '10:50'], ['sprint', '冲刺赛', '15:00']],
+    sun: [['wup', '热身', '09:40']],
   },
   british: {
     o: 1,
-    fri: [['fp1', 'FP1 练习赛', '11:45'], ['pr', '练习（PR）', '16:00']],
-    sat: [['fp2', 'FP2 练习赛', '11:10'], ['q', '排位赛（Q1/Q2）', '11:50'], ['sprint', '冲刺赛', '16:00']],
-    sun: [['wup', '热身（Warm-up）', '09:40']],
+    fri: [['fp1', '一练（FP1）', '11:45'], ['pr', '练习（PR）', '16:00']],
+    sat: [['fp2', '二练（FP2）', '11:10'], ['q', '排位赛', '11:50'], ['sprint', '冲刺赛', '16:00']],
+    sun: [['wup', '热身', '09:40']],
   },
   qatar: {
     o: 3,
-    fri: [['fp1', 'FP1 练习赛', '17:00'], ['pr', '练习（PR）', '21:00']],
-    sat: [['fp2', 'FP2 练习赛', '16:10'], ['q', '排位赛（Q1/Q2）', '17:50'], ['sprint', '冲刺赛', '21:00']],
-    sun: [['wup', '热身（Warm-up）', '15:40']],
+    fri: [['fp1', '一练（FP1）', '17:00'], ['pr', '练习（PR）', '21:00']],
+    sat: [['fp2', '二练（FP2）', '16:10'], ['q', '排位赛', '17:50'], ['sprint', '冲刺赛', '21:00']],
+    sun: [['wup', '热身', '15:40']],
   },
   default: {
     o: 2,
-    fri: [['fp1', 'FP1 练习赛', '10:45'], ['pr', '练习（PR）', '15:00']],
-    sat: [['fp2', 'FP2 练习赛', '10:10'], ['q', '排位赛（Q1/Q2）', '10:50'], ['sprint', '冲刺赛', '15:00']],
-    sun: [['wup', '热身（Warm-up）', '09:40']],
+    fri: [['fp1', '一练（FP1）', '10:45'], ['pr', '练习（PR）', '15:00']],
+    sat: [['fp2', '二练（FP2）', '10:10'], ['q', '排位赛', '10:50'], ['sprint', '冲刺赛', '15:00']],
+    sun: [['wup', '热身', '09:40']],
   },
 };
 function mgpToken(name) {
@@ -269,6 +295,7 @@ function expandSessions(round) {
         startUtc: start.toISOString(), timeKnown: true,
         status: start.getTime() < Date.now() ? 'finished' : 'upcoming',
         sessionType: (key === 'race' || key === 'sprint' || key === 'q') ? 'comp' : 'practice',
+        est: true, // 环节时间为常规安排估算
       });
     }
   }
@@ -278,7 +305,7 @@ function expandSessions(round) {
     round: round.round, title: `${round.title} 正赛`,
     startUtc: new Date(raceUtc).toISOString(), timeKnown: true,
     status: raceUtc < Date.now() ? 'finished' : 'upcoming',
-    sessionType: 'comp',
+    sessionType: 'comp', est: false,
   });
   sessions.sort((a, b) => a.startUtc.localeCompare(b.startUtc));
   return sessions;
@@ -330,6 +357,18 @@ function saveState(state) {
   fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf8');
 }
+// 生成提醒消息（统一格式：赛事+轮次/环节+北京日期时间+估算标注）
+function buildMsg(ev, kind) {
+  const bj = formatBJ(new Date(ev.startUtc)) + '（北京时间）';
+  const icon = ev.sport === 'motogp' ? '🏁' : '⚽';
+  const lead = kind === 'day' ? '明天观赛提醒' : '1小时后开赛';
+  const head = `${icon} ${lead}：${ev.title}`;
+  const roundPart = ev.round ? ' ' + ev.round : '';
+  const estPart = ev.est ? '（时间估算，以官方公布为准）' : '';
+  const tail = kind === 'day' ? '记得准时观赛！' : '准备观赛！';
+  const body = `${ev.competition}${roundPart}，${bj}${estPart}，${tail}`;
+  return { head, body };
+}
 
 async function main() {
   log('云端观赛提醒开始运行（DRY_RUN=' + DRY_RUN + '）');
@@ -373,17 +412,16 @@ async function main() {
   for (const ev of events) {
     if (ev.status !== 'upcoming') continue;
     if (ev.sessionType === 'practice' && !NOTIFY_ALL_SESSIONS) continue; // 练习/热身默认不提醒
+    backfillCityRound(ev); // 曼城：回填"第X轮"
     const startMs = new Date(ev.startUtc).getTime();
     const diff = daysBetween(today, bjDateKey(new Date(ev.startUtc)));
-    const bj = formatBJ(new Date(ev.startUtc));
     const keyBase = `${ev.sport}:${normTitle(ev.title)}:${ev.startUtc}`;
 
     // a) 前一天提醒
     if (diff === 1 && !state[keyBase + ':day']) {
       state[keyBase + ':day'] = new Date().toISOString();
       changed = true;
-      const head = `${ev.sport === 'motogp' ? '🏁' : '⚽'} 明天观赛提醒：${ev.title}`;
-      const body = `${ev.competition}${ev.round ? ' ' + ev.round : ''}，${bj}（北京时间），记得准时观赛！`;
+      const { head, body } = buildMsg(ev, 'day');
       if (DRY_RUN) { log('[DRY] 明天提醒:', head, '|', body); }
       else { const r = await sendPush(head, body); log('明天提醒推送:', r.join(' '), '|', head); }
     }
@@ -394,8 +432,7 @@ async function main() {
       if (minsLeft <= 75 && !state[keyBase + ':1h']) {
         state[keyBase + ':1h'] = new Date().toISOString();
         changed = true;
-        const head = `${ev.sport === 'motogp' ? '🏁' : '⚽'} 1小时后开赛：${ev.title}`;
-        const body = `${ev.competition}${ev.round ? ' ' + ev.round : ''}，${bj}（北京时间），准备观赛！`;
+        const { head, body } = buildMsg(ev, '1h');
         if (DRY_RUN) { log('[DRY] 1小时提醒:', head, '|', body); }
         else { const r = await sendPush(head, body); log('1小时提醒推送:', r.join(' '), '|', head); }
       }
